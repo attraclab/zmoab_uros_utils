@@ -1,0 +1,11 @@
+ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/raspberry/dev_ws/src/zmoab_uros_utils/config/mapper_params_online_async.yaml
+
+
+ros2 run nav2_map_server map_saver_cli -f <map_name>
+
+
+ros2 launch zmoab_uros_utils  bringup_humble.py params_file:=/home/raspberry/dev_ws/src/zmoab_uros_utils/config/nav2_params_humble_atbot.yaml  use_sim_time:=False autostart:=True map:=/home/raspberry/map/office.yaml
+
+
+## Localization AMCL ###
+ros2 launch  zmoab_uros_utils localization_launch_humble.py params_file:=/home/raspberry/dev_ws/src/zmoab_uros_utils/config/nav2_amcl.yaml map:=/home/raspberry/map/office.yaml
