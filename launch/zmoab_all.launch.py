@@ -1,4 +1,5 @@
 from launch import LaunchDescription
+from launch_ros.actions import Node
 from launch.actions import (DeclareLaunchArgument, GroupAction, IncludeLaunchDescription, SetEnvironmentVariable)
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PythonExpression
@@ -32,6 +33,13 @@ def generate_launch_description():
 
 		IncludeLaunchDescription(
 			PythonLaunchDescriptionSource(os.path.join(launch_dir,'odom_ekf.launch.py'))),
+
+		Node(
+				package='zmoab_uros_utils',
+				executable='led_status_handler',
+				name='led_status_handler_node',
+				output='screen',
+			)
 
 	])
 

@@ -1,0 +1,12 @@
+[Unit]
+Description=All of ROS running on the background
+After=multi-user.target
+
+[Service]
+Type=idle
+User=raspberry
+ExecStart=/bin/bash /home/raspberry/dev_ws/src/zmoab_uros_utils/autostart_scripts/start_simple_nav.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

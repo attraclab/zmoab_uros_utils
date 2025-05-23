@@ -17,18 +17,20 @@ import os
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, GroupAction, SetEnvironmentVariable
+from launch.actions import DeclareLaunchArgument, GroupAction, SetEnvironmentVariable, IncludeLaunchDescription
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.actions import Node
 from launch_ros.descriptions import ComposableNode, ParameterFile
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from nav2_common.launch import RewrittenYaml
 
 
 def generate_launch_description():
 	# Get the launch directory
 	bringup_dir = get_package_share_directory('nav2_bringup')
+	zmoab_dir = get_package_share_directory('zmoab_uros_utils')
 
 	namespace = LaunchConfiguration('namespace')
 	map_yaml_file = LaunchConfiguration('map')
@@ -139,7 +141,10 @@ def generate_launch_description():
 				arguments=['--ros-args', '--log-level', log_level],
 				parameters=[{'use_sim_time': use_sim_time},
 							{'autostart': autostart},
-							{'node_names': lifecycle_nodes}])
+							{'node_names': lifecycle_nodes}]),
+			
+			IncludeLaunchDescription(
+				PythonLaunchDescriptionSource(os.path.join(zmoab_dir, 'launch',  'laser_pub.launch.py'))),
 		]
 	)
 

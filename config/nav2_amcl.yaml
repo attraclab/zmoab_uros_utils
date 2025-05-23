@@ -38,7 +38,7 @@ amcl:
     z_short: 0.05
     sigma_hit: 0.05 #0.2
     scan_topic: /scan
-    map_topic: map
+    map_topic: /map
     set_initial_pose: true #false
     always_reset_initial_pose: false
     first_map_only: false #true

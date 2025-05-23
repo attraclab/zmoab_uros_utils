@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 from rcl_interfaces.msg import SetParametersResult
-from std_msgs.msg import Int16MultiArray, Float32MultiArray
+from std_msgs.msg import Int16MultiArray, Float32MultiArray, Bool
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import TransformStamped
@@ -65,6 +65,7 @@ class VelOdomConverter(Node):
 		self.ahrs_pub = self.create_publisher(Float32MultiArray, '/zmoab/ahrs', 10)
 		self.imu_sub = self.create_subscription(Imu, '/zmoab/imu', self.imu_callback, qos)
 		self.imu_with_time_pub = self.create_publisher(Imu, '/zmoab/imu_with_time', qos)
+		self.imu_error_pub = self.create_publisher(Bool, '/zmoab/imu_error', qos)
 
 		## Loop ##
 		self.timer = self.create_timer(self.period, self.timer_callback)
@@ -158,6 +159,12 @@ class VelOdomConverter(Node):
 		imu_msg.linear_acceleration = msg.linear_acceleration
 		imu_msg.linear_acceleration_covariance = msg.linear_acceleration_covariance
 		self.imu_with_time_pub.publish(imu_msg)
+
+		if ((qx == 0.0) and (qy == 0.0) and (qz == 0.0) and (qw == 0.0)):
+			self.print_("BNO055 not detected")
+			imu_error_msg = Bool()
+			imu_error_msg.data = True
+			self.imu_error_pub.publish(imu_error_msg)
 
 		# self.prev_imu_ang_z = self.imu_ang_z%(2*np.pi)
 		# self.imu_ang_z = msg.angular_velocity.z

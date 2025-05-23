@@ -26,7 +26,9 @@ setup(
     entry_points={
         'console_scripts': [
             'vel_odom_converter = zmoab_uros_utils.vel_odom_converter:main',
-            'laserscan_relay = zmoab_uros_utils.laserscan_relay:main'
+            'laserscan_relay = zmoab_uros_utils.laserscan_relay:main',
+            'simple_navigation = zmoab_uros_utils.simple_navigation:main',
+            'led_status_handler = zmoab_uros_utils.led_status_handler:main'
         ],
     },
 )

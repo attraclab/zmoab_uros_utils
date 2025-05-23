@@ -1,0 +1,1 @@
+ros2 topic pub --once /goal_poses geometry_msgs/msg/PoseArray "{'poses': [{'position': {'x': 2.0, 'y': 0.0}}, {'position': {'x': 3.0, 'y': -1.5}}, {'position': {'x': 0.5, 'y': -0.5}}] }"
