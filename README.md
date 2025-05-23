@@ -33,6 +33,8 @@ ros2 run micro_ros_agent micro_ros_agent  serial --dev /dev/ttyACM0
 
 **Note** You many need to make sure what is your `/dev/tty***` for AT_ZMOAB_ROS01 board, and change that on the command above.
 
+This node is needed all the time, so please keep this node running as it is.
+
 ![](images/at_zmoab_ros_microros_start.png)
 
 
@@ -44,7 +46,7 @@ We have `/zmoab/odom` which is wheel's odometry, and `/zmoab/imu_with_time` is I
 ## Terminal 1
 ## source ros2 env and workspace
 ## need to change wheel_sep value of left-right wheel distance
-ros2 run zmoab_uros_utils vel_odom_converter.py --ros-args -p wheel_sep:=0.36
+ros2 launch zmoab_uros_utils vel_odom_converter.launch.py wheel_sep:=0.36
 
 ## Terminal 2
 ## source ros2 env and workspace
@@ -74,6 +76,8 @@ On the launch file, [msg_MID360_launch.py](https://github.com/Livox-SDK/livox_ro
 
 Then to convert PointCloud2 topic to LaserScan topic, we are going to use [pointcloud_to_laserscan](https://github.com/ros-perception/pointcloud_to_laserscan.git) package.
 
+In this package there is [laserscan_relay.py](./zmoab_uros_utils/laserscan_relay.py) node, which subscribe on `/lidar_scan` topic the change the `frame_id` name to `laser_frame` and re-publishing that to `/scan`.
+
 ```sh
 ## Terminal 1
 ## source ros2 env and workspace
@@ -82,24 +86,16 @@ ros2 launch livox_ros_driver2 msg_MID360_launch.py
 
 ## Terminal 2
 ## source ros2 env and workspace
-## start pointcloud to laserscan node
-ros2 launch zmoab_uros_utils pc2l_livox.launch.py
-
-```
-
-In this package there is [laserscan_relay.py](./zmoab_uros_utils/laserscan_relay.py) node, which subscribe on `/lidar_scan` topic the change the `frame_id` name to `laser_frame` and re-publishing that to `/scan`.
-
-```sh
-## Terminal 3
-## source ros2 env and workspace
-## start laserscan_relay node
+## start pc2l_livox.launch.py and laserscan_relay node
 ros2 launch zmoab_uros_utils  laser_pub.launch.py
 
 ```
 
+Please keep `livox_ros_driver2` running all the time.
+
 ## Working with Navigation2
 
-In order to use with Nav2, we need to have at least TF of `odom -> base_link -> laser_frame`, with odometry and laserscan topics. From previous launch files we could achieve that. So make sure odometry and lasercan nodes are running.
+In order to use with Nav2, we need to have at least TF of `odom -> base_link -> laser_frame`, with odometry and laserscan topics. From previous launch files we could achieve that.
 
 Now you can use `slam_toolbox`  or `nav2_bringup` from Nav2 package.
 
@@ -113,7 +109,17 @@ rviz2 -d slam_mapping.rviz
 
 ## Terminal 2
 ## source ros2 env and workspace
-ros2 launch slam_toolbox online_async_launch.py slam_params_file:=~/dev_ws/src/zmoab_uros_utils/config/mapper_params_online_async.yaml
+## running odometry
+ros2 launch zmoab_uros_utils zmoab_all.launch.py wheel_sep:=0.36
+
+## Terminal 3
+## source ros2 env and workspace
+## running laserscan
+ros2 launch zmoab_uros_utils laser_pub.launch.py
+
+## Terminal 4
+## source ros2 env and workspace
+ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/raspberry/dev_ws/src/zmoab_uros_utils/config/mapper_params_online_async.yaml
 
 ## Make sure the directory of workspace is correct.
 
@@ -123,7 +129,7 @@ Try moving around to create the map of your place. Once the map is fully created
 
 
 ```sh
-## Terminal 3
+## Terminal 5
 ## source ros2 env and workspace
 ros2 run nav2_map_server map_saver_cli -f your-map-name
 
@@ -139,7 +145,12 @@ rviz2 -d amcl_with_path.rviz
 
 ## Terminal 2
 ## source ros2 env and workspace
-ros2 launch  zmoab_uros_utils localization_launch_humble.py params_file:=~/dev_ws/src/zmoab_uros_utils/config/nav2_amcl.yaml map:=~/map/your-map-name.yaml
+## running odometry
+ros2 launch zmoab_uros_utils zmoab_all.launch.py wheel_sep:=0.36
+
+## Terminal 3
+## source ros2 env and workspace
+ros2 launch  zmoab_uros_utils localization_launch_humble.py params_file:=/home/raspberry/dev_ws/src/zmoab_uros_utils/config/nav2_amcl.yaml map:=/home/raspberry/map/your-map-name.yaml
 
 ## you will need to change the workspace directory and your-map-name to correct one.
 ```
@@ -154,10 +165,45 @@ rviz2 -d nav2_bringup_humble.rviz
 
 ## Terminal 2
 ## source ros2 env and workspace
-ros2 launch zmoab_uros_utils  bringup_humble.py params_file:=~/dev_ws/src/zmoab_uros_utils/config/nav2_params_humble_atbot.yaml  use_sim_time:=False autostart:=True map:=~/map/your-map-name.yaml
+## running odometry
+ros2 launch zmoab_uros_utils zmoab_all.launch.py wheel_sep:=0.36
+
+## Terminal 3
+## source ros2 env and workspace
+ros2 launch zmoab_uros_utils  bringup_humble.py params_file:=/home/raspberry/dev_ws/src/zmoab_uros_utils/config/nav2_params_humble_atbot.yaml  use_sim_time:=False autostart:=True map:=/home/raspberry/map/your-map-name.yaml
 
 ## you will need to change the workspace directory and your-map-name to correct one.
 
 ```
 
+## Simple Navigation
 
+The `simple_navigation` node is using localization node to let the robot moving inside the map, but instead of using costmap similar to `nav2_bringup` this node using point-to-point moving with PID control for turning and steering. There is no object avoidance implemented so user must be taken care the selected point by themselves.
+
+```sh
+## Terminal 1
+## source ros2 env and workspace
+## change directory to zmoab_uros_utils/rviz
+rviz2 -d amcl_with_path.rviz
+
+## Terminal 2
+## source ros2 env and workspace
+## running odometry
+ros2 launch zmoab_uros_utils zmoab_all.launch.py wheel_sep:=0.36
+
+## Terminal 3
+## source ros2 env and workspace
+ros2 launch zmoab_uros_utils localization_launch_humble.py params_file:=/home/raspberry/dev_ws/src/zmoab_uros_utils/config/nav2_amcl.yaml map:=/home/raspberry/map/your-map-name.yaml
+
+## you will need to change the workspace directory and your-map-name to correct one.
+
+## Terminal 4
+## source ros2 env and workspace
+## start simple_nav
+ros2 launch zmoab_uros_utils simple_nav.launch.py
+
+```
+
+You can use `2D Goal Pose` arrow to select the point to go. The robot will change the mode to auto by itself and start to move to that point.
+
+![](images/at_zmoab_ros_simple_nav.png)
