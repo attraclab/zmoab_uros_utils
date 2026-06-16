@@ -24,15 +24,23 @@ class VelOdomConverter(Node):
 		#################
 		self.declare_parameter('show_log', True)
 		self.declare_parameter('wheel_sep', 0.49)
+		self.declare_parameter('odom_frame', "odom")
+		self.declare_parameter('base_frame', "base_link")
 		# self.declare_parameter('release_brake', False)
+
 		self.add_on_set_parameters_callback(self.parameter_callback)
 		self.show_log = self.get_parameter('show_log').get_parameter_value().bool_value
 		self.wheel_sep = self.get_parameter('wheel_sep').get_parameter_value().double_value
+		self.odom_frame = self.get_parameter('odom_frame').get_parameter_value().string_value
+		self.base_frame = self.get_parameter('base_frame').get_parameter_value().string_value
 		# self.release_brake = self.get_parameter('release_brake').get_parameter_value().bool_value
+		
 
 		self.get_logger().info("Using parameters as below")
 		self.get_logger().info("show_log: {}".format(self.show_log))
 		self.get_logger().info("wheel_sep: {}".format(self.wheel_sep))
+		self.get_logger().info("odom_frame: {}".format(self.odom_frame))
+		self.get_logger().info("base_frame: {}".format(self.base_frame))
 		# self.get_logger().info("release_brake: {}".format(self.release_brake))
 
 
@@ -58,7 +66,10 @@ class VelOdomConverter(Node):
 		qos = rclpy.qos.QoSProfile(reliability=rclpy.qos.ReliabilityPolicy.BEST_EFFORT, \
 											history=rclpy.qos.HistoryPolicy.KEEP_LAST, \
 											depth=1)
-		self.cmd_vel_sub = self.create_subscription(Twist, '/cmd_vel', self.cmd_vel_callback, 10)
+		cmd_vel_qos = rclpy.qos.QoSProfile(reliability=rclpy.qos.ReliabilityPolicy.RELIABLE, \
+											history=rclpy.qos.HistoryPolicy.KEEP_LAST, \
+											depth=1)
+		self.cmd_vel_sub = self.create_subscription(Twist, '/cmd_vel', self.cmd_vel_callback, cmd_vel_qos)
 		self.rpm_cmd_pub = self.create_publisher(Int16MultiArray, '/zmoab/rpm_cmd', qos)
 		self.rpm_fb_sub = self.create_subscription(Int16MultiArray, '/zmoab/rpm_fb', self.rpm_fb_callback, qos)
 		self.odom_pub = self.create_publisher(Odometry, '/zmoab/odom', qos)
@@ -248,8 +259,8 @@ class VelOdomConverter(Node):
 		q = quaternion_from_euler(0,0, self.theta)
 		odom_msg = Odometry()
 		odom_msg.header.stamp = self.get_clock().now().to_msg()
-		odom_msg.header.frame_id = "odom"
-		odom_msg.child_frame_id = "base_link"	#"base_footprint"	#"base_link"
+		odom_msg.header.frame_id = self.odom_frame
+		odom_msg.child_frame_id = self.base_frame	#"base_footprint"	#"base_link"
 		odom_msg.pose.pose.position.x = self.x
 		odom_msg.pose.pose.position.y = self.y
 		odom_msg.pose.pose.position.z = 0.0

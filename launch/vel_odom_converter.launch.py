@@ -11,6 +11,8 @@ def generate_launch_description():
 
 	show_log = LaunchConfiguration('show_log')
 	wheel_sep = LaunchConfiguration('wheel_sep')
+	odom_frame = LaunchConfiguration('odom_frame')
+	base_frame = LaunchConfiguration('base_frame')
 
 	declare_show_log = DeclareLaunchArgument(
 		'show_log', default_value='True', description='Show logging'
@@ -20,17 +22,29 @@ def generate_launch_description():
 		'wheel_sep', default_value='0.49', description='Wheels separate distance'
 	)
 
+	declare_odom_frame = DeclareLaunchArgument(
+		'odom_frame', default_value='odom', description='odom frame id'
+	)
+
+	declare_base_frame = DeclareLaunchArgument(
+		'base_frame', default_value='base_link', description='base frame id'
+	)
+
 	### JMOAB ATCART8 ###
 	vel_odom_converter_node = Node(
 		package="zmoab_uros_utils",
 		executable="vel_odom_converter",
 		name="vel_odom_converter_node",
 		parameters=[{'show_log': show_log,
-						'wheel_sep': wheel_sep}])
+						'wheel_sep': wheel_sep,
+						'odom_frame': odom_frame,
+						'base_frame': base_frame}])
 
 
 	ld.add_action(declare_show_log)
 	ld.add_action(declare_wheel_sep)
+	ld.add_action(declare_odom_frame)
+	ld.add_action(declare_base_frame)
 	ld.add_action(vel_odom_converter_node)
 
 	return ld
