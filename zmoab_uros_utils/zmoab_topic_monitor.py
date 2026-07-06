@@ -66,11 +66,13 @@ class ZmoabTopicMonitor(Node):
         super().__init__("zmoab_topic_monitor")
 
         self.declare_parameter("stale_sec", 1.0)
+        self.declare_parameter("debug_stale_sec", 3.0)
         self.declare_parameter("report_sec", 1.0)
         self.declare_parameter("log_dir", os.path.expanduser("~/zmoab_uros_debug/logs"))
         self.declare_parameter("use_best_effort", False)
 
         self.stale_sec = float(self.get_parameter("stale_sec").value)
+        self.debug_stale_sec = float(self.get_parameter("debug_stale_sec").value)
         self.report_sec = float(self.get_parameter("report_sec").value)
         self.log_dir = self.get_parameter("log_dir").value
         self.use_best_effort = bool(self.get_parameter("use_best_effort").value)
@@ -127,6 +129,7 @@ class ZmoabTopicMonitor(Node):
             "vin_pub_ok_count",
             "sbus_fs_pub_ok_count",
             "debug_pub_ok_count",
+            "timer_watchdog_trip_count",
         ])
         self.debug_csv_file.flush()
         
@@ -181,6 +184,7 @@ class ZmoabTopicMonitor(Node):
         self.get_logger().info(f"Logging CSV to: {self.csv_path}")
         self.get_logger().info(f"Logging events to: {self.event_path}")
         self.get_logger().info(f"Stale threshold: {self.stale_sec:.2f} sec")
+        self.get_logger().info(f"Debug stale threshold: {self.debug_stale_sec:.2f} sec")
         self.get_logger().info(f"QoS reliability: {'BEST_EFFORT' if self.use_best_effort else 'RELIABLE'}")
         self.get_logger().info(f"Logging debug CSV to: {self.debug_csv_path}")
 
@@ -208,11 +212,13 @@ class ZmoabTopicMonitor(Node):
         for topic, state in self.states.items():
             age = state.age()
 
+            topic_stale_sec = self.debug_stale_sec if topic == "/zmoab/debug" else self.stale_sec
+
             if age is None:
                 status = "NEVER_RECEIVED"
                 never_topics.append(topic)
                 age_out = ""
-            elif age > self.stale_sec:
+            elif age > topic_stale_sec:
                 status = "STALE"
                 stale_topics.append(topic)
                 state.stale_count += 1
@@ -246,7 +252,7 @@ class ZmoabTopicMonitor(Node):
         )
 
         debug_age = self.states["/zmoab/debug"].age()
-        debug_dead = (debug_age is None) or (debug_age > self.stale_sec)
+        debug_dead = (debug_age is None) or (debug_age > self.debug_stale_sec)
 
         all_dead = normal_dead
 
@@ -280,6 +286,11 @@ class ZmoabTopicMonitor(Node):
         wall = datetime.now().isoformat(timespec="seconds")
         now = time.monotonic()
 
+        # Field 23 (timer_watchdog_trip_count) is only present on newer firmware
+        # that grew the debug array to 24. Stay backward compatible with 23-field
+        # firmware by defaulting to 0.
+        watchdog_trip = data[23] if len(data) >= 24 else 0
+
         self.debug_csv_writer.writerow([
             wall,
             f"{now:.3f}",
@@ -308,6 +319,7 @@ class ZmoabTopicMonitor(Node):
             data[20],  # vin_pub_ok_count
             data[21],  # sbus_fs_pub_ok_count
             data[22],  # debug_pub_ok_count
+            watchdog_trip,  # timer_watchdog_trip_count (0 on older firmware)
         ])
         self.debug_csv_file.flush()
 

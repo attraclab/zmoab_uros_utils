@@ -1,0 +1,13 @@
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ROS 2 / colcon build artifacts
+build/
+install/
+log/
+
+# Editor/OS cruft
+*.swp
+.DS_Store
