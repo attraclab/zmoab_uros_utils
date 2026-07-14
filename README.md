@@ -2,6 +2,39 @@
 
 This package is a helper package to work with AT_ZMOAB_ROS01 board which running Micro-ROS [at_zmoab_ros](https://github.com/attraclab/at_zmoab_ros01.git).
 
+## Dependencies
+
+Most dependencies are declared in `package.xml` and can be installed with rosdep
+from the workspace root:
+
+```sh
+cd ~/dev_ws
+rosdep install --from-paths src --ignore-src -y
+```
+
+That covers the ROS packages (`rclpy`, the message packages, `tf2_ros`,
+`tf_transformations`, `nav2_common`, `nav2_msgs`, `launch`/`launch_ros`, …) plus
+`python3-numpy` and `python3-transforms3d`.
+
+**Two Python packages need pip** (no suitable apt/rosdep version):
+
+```sh
+pip3 install "transforms3d>=0.4.1" simple_pid
+```
+
+- **`transforms3d>=0.4.1`** — used via `tf_transformations` (in `vel_odom_converter`,
+  `simple_navigation`). The apt package `python3-transforms3d` is **0.3.1**, which
+  uses numpy aliases (`np.float`) that were **removed in numpy 1.24**. On a system
+  with numpy ≥ 1.24 (e.g. after installing open3d, which pulls a newer numpy) it
+  crashes at import with `AttributeError: module 'numpy' has no attribute 'float'`.
+  Upgrading to `transforms3d>=0.4.1` (installed to `/usr/local`, shadowing the apt
+  0.3.1) fixes it. Keep numpy `<2` for the rest of the ROS stack.
+- **`simple_pid`** — used by the `simple_navigation` node's PID control.
+
+External packages used by some launch files (install if you use those flows):
+`robot_localization` (odom EKF), `pointcloud_to_laserscan` (LaserScan),
+`slam_toolbox` / `nav2_bringup` (mapping & navigation).
+
 ## Node
 
 **vel_odom_converter** : This node is used to compute odometry `/zmoab/odom` from wheels speed feedback `/zmoab/rpm_fb` and to convert command velocities `/cmd_vel` to wheels speed command `/zmoab/rpm_cmd`.

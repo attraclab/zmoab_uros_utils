@@ -7,6 +7,34 @@
   <maintainer email="rasheedo.kit@gmail.com">rasheed</maintainer>
   <license>MIT</license>
 
+  <!-- ROS runtime deps (rosdep-installable) -->
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>nav2_msgs</exec_depend>
+  <exec_depend>rcl_interfaces</exec_depend>
+  <exec_depend>lifecycle_msgs</exec_depend>
+  <exec_depend>action_msgs</exec_depend>
+  <exec_depend>builtin_interfaces</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>tf_transformations</exec_depend>
+  <exec_depend>nav2_common</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+
+  <!-- Python deps.
+       transforms3d is used via tf_transformations. NOTE: the apt package
+       python3-transforms3d (0.3.1) uses numpy aliases removed in numpy>=1.24
+       (e.g. np.float) and will crash on a modern numpy. If numpy>=1.24 is
+       installed, upgrade transforms3d to >=0.4.1 (see README):
+         pip3 install -U "transforms3d>=0.4.1"
+       simple_pid (used by simple_navigation) has no rosdep key -> pip only. -->
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-transforms3d</exec_depend>
+
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
